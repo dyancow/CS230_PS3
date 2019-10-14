@@ -151,34 +151,17 @@
 
 ;; ----- Problem 1 -----
 
-;;ANSWER
+;(define g1 (make-graph '(a b c d e) 
+;		       '((a b) (a c) (b c) (b e) (c d) (d b))))
 
-;(map (lambda (x) (verify-path g (list x (cdr lst)))) (exits (car lst) g))))))
+; (name-vertices (exits (lookup-vertex 'b (vertices g1)) g1))
 
-(define exits
-  (lambda (v g)
-    (map (lambda (x) (finish x))
-         (filter (lambda (x) (equal-vertex? v (start x))) (edges g)))))
-
-(define verify-path
-  (lambda (g lst)
-    (cond ((equals? (cdr lst) '()) #t)
-          ((member-vertices (cadr lst) (exits (car lst) g))
-           (verify-path g (cdr lst)))
-          (else #f))))
-           
-
-(define g1 (make-graph '(a b c d e) 
-		       '((a b) (a c) (b c) (b e) (c d) (d b))))
-
-(name-vertices (exits (lookup-vertex 'b (vertices g1)) g1))
-
-(verify-path g1
-             (map (lambda (x) (lookup-vertex x (vertices g1))) '(a b c d b e)))
+;(verify-path g1 
+;   (map (lambda (x) (lookup-vertex x (vertices g1))) '(a b c d b e)))
 ; ==> #t
   
-(verify-path g1
-             (map (lambda (x) (lookup-vertex x (vertices g1))) '(a b c d e)))
+;(verify-path g1 
+;   (map (lambda (x) (lookup-vertex x (vertices g1))) '(a b c d e)))
 ; ==> #f
   
 ;; ----- Problem 2 -----
