@@ -119,10 +119,6 @@
           ((equal-vertex? a (car lat)) lat) 
           (else (member-vertices a (cdr lat))))))
 
-;; Find the set difference of two sets represented as lists.  That is,
-;; return a list consisting of everything in list1 that is not in
-;; list2
-
 (define set-diff-vertices
   (lambda (list1 list2)
     (cond ((null? list1) '()) 
@@ -155,20 +151,20 @@
 
 ;(map (lambda (x) (verify-path g (list x (cdr lst)))) (exits (car lst) g))))))
 
-(define exits 
+(define exits ; takes vertex (v) and graph (g) and returns a list of a vertices 1 step from v
   (lambda (v g)
     (map (lambda (x) (finish x))
          (filter (lambda (x) (equal-vertex? v (start x))) (edges g)))))
 
-(define verify-path
+(define verify-path 
   (lambda (g lst)
     (cond ((equals? (cdr lst) '()) #t)
           ((member-vertices (cadr lst) (exits (car lst) g))
            (verify-path g (cdr lst)))
           (else #f))))
 
-; RUNTIME EXPLANATION
-; ???
+;; RUNTIME PROOF!!!!!!!!!!!!!!!!!!!!!!!!!
+;; Finally, give a convincing logical argument that your function has a running time which is polynomial in the number of vertices in the graph. Your argument may be informal, in that it does not need to involve mathematical notation, nor does it need to be an outright proof; however, it should be convincing in that someone, such as your graders, should be able to understand why it is true!
 
 (define g1 (make-graph '(a b c d e) 
 		       '((a b) (a c) (b c) (b e) (c d) (d b))))
@@ -264,6 +260,7 @@
   (lambda (dfa s sym)
     (foldl xor #f
            (map (lambda (x) (check-edge s sym x)) (edges dfa)))))
+
 #|
 (define step-dfaTEMP
   (lambda (dfa s sym)
@@ -411,3 +408,5 @@
 ; (name-vertices (find-path 'd 'd g3)) ==> (d)
 ; (find-path 'a 'd g3)                    ==> #f
 ; (name-vertices (find-path 'b 'd g4)) ==> (b a d)
+
+;;TODO 6 and 7 and "proof of runtime" for 1
