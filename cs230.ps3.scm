@@ -141,7 +141,7 @@
 ;; Take the intersection of two sets represented as lists 
 
 (define intersection
-  (lambda (list1 list2)
+  (lambda (list1 list2) 
     (cond ((null? list1) '()) 
           ((member (car list1) list2) 
              (cons (car list1) (intersection (cdr list1) list2)))
@@ -155,7 +155,7 @@
 
 ;(map (lambda (x) (verify-path g (list x (cdr lst)))) (exits (car lst) g))))))
 
-(define exits
+(define exits 
   (lambda (v g)
     (map (lambda (x) (finish x))
          (filter (lambda (x) (equal-vertex? v (start x))) (edges g)))))
@@ -166,12 +166,16 @@
           ((member-vertices (cadr lst) (exits (car lst) g))
            (verify-path g (cdr lst)))
           (else #f))))
-           
+
+; RUNTIME EXPLANATION
+; ???
 
 (define g1 (make-graph '(a b c d e) 
 		       '((a b) (a c) (b c) (b e) (c d) (d b))))
 
 (name-vertices (exits (lookup-vertex 'b (vertices g1)) g1))
+
+(display "Problem 1 Testing") (newline)
 
 (verify-path g1
              (map (lambda (x) (lookup-vertex x (vertices g1))) '(a b c d b e)))
@@ -180,7 +184,9 @@
 (verify-path g1
              (map (lambda (x) (lookup-vertex x (vertices g1))) '(a b c d e)))
 ; ==> #f
-  
+
+;;INFORMAL PROOF EXTERNAL
+
 ;; ----- Problem 2 -----
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -231,50 +237,152 @@
             :start-state s-state
             :final-states f-states))))
 
-;(define dfa1
-;  (make-automaton '(a b c) 
-;	    '((a a 0) (a b 1) (b a 1) (b c 0) (c b 0) (c c 1))
-;            'a '(a)))
+(define dfa1
+  (make-automaton '(a b c) 
+                  '((a a 0) (a b 1) (b a 1) (b c 0) (c b 0) (c c 1))
+                  'a
+                  '(a)))
 
 ;;; ----- Problem 3 -----
 
-; (step-dfa dfa1 'c 1) ==> c
-; (step-dfa dfa1 'd 0) ==> #f
-; (step-dfa dfa1 'a 0) ==> a
-; (step-dfa dfa1 'a 1) ==> b
-; (step-dfa dfa1 'a 2) ==> #f
+; ANSWER
 
-;(define bad-dfa
-;  (make-automaton '(a b c) 
-; 	    '((a a 0) (a b 0) (b a 1) (b c 0) (c b 0) (c c 1))
-;            'a '(a)))
+(define xor ; helper - exclusive or function
+  (lambda (a b)
+    (cond ((and a b) #f)
+          (else
+           (or a b)))))
 
-; (step-dfa bad-dfa 'a 0) ==> #f
+(define check-edge ; helper - checks if start (s) and symbol (sym) are equivalent to edge (e)
+  (lambda (s sym e) 
+    (if (and (equal? (name (start e)) s)
+             (equal? (label e) sym))
+        (name (finish e))
+        #f)))
+   
+(define step-dfa
+  (lambda (dfa s sym)
+    (foldl xor #f
+           (map (lambda (x) (check-edge s sym x)) (edges dfa)))))
+#|
+(define step-dfaTEMP
+  (lambda (dfa s sym)
+    (letrec ((helper
+              (lambda (edgelst)
+                (cond ((null? edgelst) #f)
+                      ((and (equal? (name (start (car edgelst))) s)
+                            (equal? (label (car edgelst)) sym))
+                       (name (finish (car edgelst))))
+                      (else
+                       (helper (cdr edgelst)))))))
+      (helper (edges dfa)))))
+|#
+
+(display "Problem 3 Testing") (newline)
+(step-dfa dfa1 'c 1) ;==> c
+(step-dfa dfa1 'd 0) ;==> #f
+(step-dfa dfa1 'a 0) ;==> a
+(step-dfa dfa1 'a 1) ;==> b
+(step-dfa dfa1 'a 2) ;==> #f
+
+(define bad-dfa
+  (make-automaton '(a b c)
+                  '((a a 0) (a b 0) (b a 1) (b c 0) (c b 0) (c c 1))
+                  'a '(a)))
+
+(step-dfa bad-dfa 'a 0) ;==> #f
 
 ;; ----- Problem 4 -----
-
-; (simulate-dfa dfa1 '(1 0 0 1)) ==> #t
-; (simulate-dfa dfa1 '(1 0 1 1)) ==> #f
 
 (define integer->binary
   (lambda (n)
     (cond ((eq? n 0) '())
 	  (else (append (integer->binary (quotient n 2)) 
                         (list (if (even? n) 0 1)))))))
-          
-; (simulate-dfa dfa1 (integer->binary 12))
-; (simulate-dfa dfa1 (integer->binary 10))
+
+; ANSWER
+
+(define simulate-dfa
+  (lambda (dfa seq)
+    (letrec ((helper
+              (lambda (s sequen)
+                (cond ((null? sequen)
+                       (member? s (final-states dfa)))
+                      ((step-dfa dfa s (car sequen))
+                       (helper (step-dfa dfa s (car sequen)) (cdr sequen)))
+                      (else #f)))))
+      (helper (start-state dfa) seq))))
+
+#|
+(define simulate-dfaTEMP
+  (lambda (dfa sequence)
+    (letrec ((helper
+              (lambda (s seq)
+                (cond ((equals? (cdr seq) '()) #t)
+                      (else
+                       (foldl (lambda (a b) (or a b)) #f 
+                              (map (lambda (x) (helper x (cdr seq)))
+                                   (filter (lambda (x) (step-dfa dfa x (car seq)))
+                                           (name-vertices (exits (lookup-vertex s (vertices dfa)) dfa))))))))))
+      (helper (start-state dfa) sequence))))
+|#
+
+(display "Problem 4 Testing") (newline)
+(simulate-dfa dfa1 '(1 0 0 1)) ;==> #t
+(simulate-dfa dfa1 '(1 0 1 1)) ;==> #f
+(simulate-dfa dfa1 (integer->binary 12))
+(simulate-dfa dfa1 (integer->binary 10))
 
 ;; ----- Problem 5 -----
 
-;(define nfa1
-;  (make-automaton '(a b c d e)
-;	    '((a a 0) (a a 1) (a b 1) (a c 0) (b d 1) (c e 0)
-;	      (d d 0) (d d 1) (e e 0) (e e 1))
-;	    'a
-;	    '(d e)))
-            
+
+; ANSWER
+
+(define step-nfa
+  (lambda (nfa slst sym)
+    (cond ((null? slst) '() )
+          (else
+           (append (filter identity
+                   (map (lambda (x) (check-edge (car slst) sym x)) (edges nfa)))
+                 (step-nfa nfa (cdr slst) sym))))))
+
+(define simulate-nfa
+  (lambda (nfa seq)
+    (letrec ((helper
+              (lambda (slst sequen)
+                (cond ((null? sequen)
+                       (member? #t
+                                (map (lambda (x) (member? x (final-states nfa))) slst)))
+                      ((step-nfa nfa slst (car sequen))
+                       (helper (step-nfa nfa slst (car sequen)) (cdr sequen)))                    
+                      (else #f)))))
+      (helper (list (start-state nfa)) seq))))
+
+(define nfa1
+  (make-automaton '(a b c d e)
+                  '((a a 0) (a a 1) (a b 1) (a c 0) (b d 1) (c e 0)
+                            (d d 0) (d d 1) (e e 0) (e e 1))
+                  'a
+                  '(d e)))
+
+(display "Problem 4 Testing") (newline)
+(step-nfa nfa1 '(a b c d e) 2) ;==> ()
+(step-nfa nfa1 '(a) 1) ;==> (a b)
+(step-nfa nfa1 '(c e) 1) ;==> (e)
+(step-nfa nfa1 '(b d) 1) ;==> (d) DUPLICATES?
+
+(simulate-nfa nfa1 '(1 0 0 1)) ;==> #t
+(simulate-nfa nfa1 '(1 0)) ;==> #f
+(simulate-nfa nfa1 '(1 0 0)) ;==> #t
+(simulate-nfa nfa1 '(0 1)) ;==> #f
+
 ;; ----- Problem 6 -----
+
+(define path?
+  (lambda (v1 v2 g)
+    (member? (list )
+
+             
 
 (define g2 (make-graph '(a b c) '((a b) (b a) (a c) (c a) (b c))))
 (define g3 (make-graph '(a b c d) '((a b) (b c) (a c) (c b) (d b))))
